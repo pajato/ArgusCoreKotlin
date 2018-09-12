@@ -1,0 +1,107 @@
+* Authentication Package/Library Diagram
+The authentication interfaces and classes are captured in the "com.pajato.argus.core.auth" package. Figure 2 captures the basic design and the facilities provided.
+#+begin_src plantuml :file core-authentication.png
+caption Figure 2 Core Authentication
+title Application Core Authentication Package/Library
+
+
+package Test <<test>> #Cornsilk {
+  class AccountImpl {
+    init()
+  }
+}
+
+package authentication <<library>> #Cornsilk {
+  interface Authenticator {
+    register(email: String, password1: String, password2: String) : String
+    login(email: String, password: String) : String
+    logout(email: String) : String
+  }
+  note top : function return values are error\nmessages; empty string means\nno error, or success, a diagnostic\nmessage otherwise.
+  class AuthenticatorImpl <<interactor>> {
+    init(Authenticator)
+  }
+  interface Account <<entity>> {
+    +id: Long
+    edit(account: Account)
+  }
+  Authenticator <-- AuthenticatorImpl
+  AuthenticatorImpl <-- Account
+  AccountImpl --|> Account
+}
+
+#+end_src
+
+#+RESULTS:
+[[file:core-authentication.png]]
+* Lists Package/Library Diagram
+The list handling interfaces and classes are captured in the "lists" package which is implemented as as a
+library in a Kotlin environment. Figure 2 captures the basic design and the facilities provided.
+#+begin_src plantuml :file core-lists.png
+caption Figure 2 Core Lists
+title Application Core Lists Library
+
+package entities <<library>> #F9F8BF {
+  class Video {
+    id: String
+    name; String
+    type: VideoType
+  }
+
+  class VideoList {
+    id: String
+    name: String
+    entries: List<Video>
+  }
+
+  abstract class VideoType {
+    name: VideoTypeEnum
+    data: ?
+  }
+
+  VideoList --> Video
+  Video --> VideoType
+}
+
+package lists <<library>> #B0D6F9 {
+  class ListsInteractor <<interactor>> {
+    createList(name: String) -> VideoList
+    createVideo(name: Srring, type: VideoType) -> Video
+  }
+
+  ListsInteractor --> VideoList
+  ListsInteractor --> VideoType
+  ListsInteractor --> Video
+
+}
+
+#+end_src
+
+#+RESULTS:
+[[file:core-lists.png]]
+* Other stuff (likely stale)
+** Class diagram
+#+begin_src plantuml :file watchlist.png
+package "core" #DDDDDD {
+  interface Video
+  class ActiveVideo
+
+  interface VideoList
+  class WatchList<Video>
+
+}
+#+end_src
+
+#+RESULTS:
+[[file:watchlist.png]]
+
+** Use case diagram
+#+begin_src plantuml :file tryout.png
+  Alice -> Bob: synchronous call
+  Alice ->> Bob: asynchronous call
+#+end_src
+
+#+RESULTS:
+[[file:tryout.png]]
+
+** Package diagram

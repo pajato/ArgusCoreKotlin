@@ -1,1 +1,2 @@
+rootProject.name = 'ArgusCoreKotlinJVM'
 include 'project:core', 'project:data', 'project:video'

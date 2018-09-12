@@ -1,41 +1,28 @@
 package com.pajato.argus.core.data
 
-sealed class Video {
-    abstract val type: VideoType
-    abstract val data: MutableMap<String, Attribute>
-}
+sealed class Video
 
-class TVShow(val id: Int) : Video() {
-    override val type = VideoType.tvShow
-    override val data = mutableMapOf<String, Attribute>()
-}
+class CoreVideo(val id: Int, val data: MutableMap<String, Attribute> = mutableMapOf()) : Video()
 
-class Movie(val id: Int) : Video() {
-    override val type = VideoType.movie
-    override val data = mutableMapOf<String, Attribute>()
-}
+class VideoError(val key: ErrorKey, val message: String = "") : Video()
 
-class VideoError(val key: ErrorKey) : Video() {
-    override val type = VideoType.error
-    override val data = mutableMapOf<String, Attribute>()
-}
-
-class Episode(val attributes: MutableList<Attribute>) {}
-class SeriesInstance(val episodes: MutableList<Episode>) {}
+class Episode(val attributes: MutableList<Attribute>)
+class SeriesInstance(val episodes: MutableList<Episode>)
 
 sealed class Attribute {
     abstract val key: String
 }
 
-class Provider(val name: String) : Attribute() {override val key = "Provider"}
 class Cast(val performers: List<String>) : Attribute() {override val key = "Cast"}
 class Directors(val directors: List<String>) : Attribute() {override val key = "Directors"}
-class Series(val series: MutableList<SeriesInstance>) : Attribute() {override val key = "Series"}
 class Name(val name: String) : Attribute() {override val key = "Name"}
+class Provider(val name: String) : Attribute() {override val key = "Provider"}
 class Release(val timeStamp: Long) : Attribute() {override val key = "Release"}
+class Series(val series: MutableList<SeriesInstance>) : Attribute() {override val key = "Series"}
+class Type(val type: VideoType) : Attribute() {override val key = "Type"}
 
 enum class VideoType {
-    error, movie, movieSeries, tvShow, tvSeries
+    Error, Movie, MovieSeries, TvShow, TvSeries
 }
 
 enum class ErrorKey {
