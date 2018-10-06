@@ -23,7 +23,7 @@ class Registrar(file: File) : VideoRegistrar {
     override fun findAll(filterData: MutableSet<Attribute>): List<Video> {
         fun matches(video: CoreVideo): Boolean {
             filterData.forEach {
-                val attribute = video.data[it.attrType] ?: return false
+                val attribute = video.videoData[it.attrType] ?: return false
                 if (!attribute.isEqual(it)) return false
             }
             return true
@@ -57,10 +57,10 @@ class Registrar(file: File) : VideoRegistrar {
             fun processAttributes(video: CoreVideo) {
                 fun registerVideoWithAttributes(video: CoreVideo, attrs: MutableMap<AttributeType, Attribute>) {
                     videoList.add(video)
-                    val id = video.id
+                    val id = video.videoId
                     idMap[name] = id
                     videoMap[id] = video
-                    video.data.putAll(attrs)
+                    video.videoData.putAll(attrs)
                 }
 
                 val attributes : MutableMap<AttributeType, Attribute> = mutableMapOf()

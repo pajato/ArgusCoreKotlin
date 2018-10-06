@@ -59,17 +59,17 @@ class Persister(private val eventStore: File) {
     }
 
     fun archive(video: CoreVideo) {
-        persist(ArchiveEvent(video.id))
+        persist(ArchiveEvent(video.videoId))
     }
 
     fun register(video: CoreVideo, name: String) {
-        persist(RegisterEvent(video.id, name))
+        persist(RegisterEvent(video.videoId, name))
     }
 
     fun update(video: CoreVideo, type: UpdateType) {
         fun persistAttribute(attr: Attribute) {
             fun putString(value: String) {
-                persist(UpdateEvent(type, video.id, attr.attrType, value))
+                persist(UpdateEvent(type, video.videoId, attr.attrType, value))
             }
             fun putArray(values: List<String>) {
                 for (value in values)
@@ -87,7 +87,7 @@ class Persister(private val eventStore: File) {
             }
         }
 
-        for (attr in video.data.values)
+        for (attr in video.videoData.values)
             persistAttribute(attr)
     }
 

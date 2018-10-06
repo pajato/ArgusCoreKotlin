@@ -87,8 +87,8 @@ class DataTest {
     @Test
     fun `Core video has a correct id and no attributes`() {
         val video = CoreVideo(0)
-        assertEquals(0, video.id)
-        assertEquals(0, video.data.size)
+        assertEquals(0, video.videoId)
+        assertEquals(0, video.videoData.size)
     }
 
     @Test
@@ -179,7 +179,7 @@ class DataTest {
     @Test
     fun `do a remove and removeAll on a core video object`() {
         val video = CoreVideo(0)
-        video.data[AttributeType.Provider] = Provider("HBO")
+        video.videoData[AttributeType.Provider] = Provider("HBO")
         video.updateAttribute(Provider(""), UpdateType.Remove)
         video.updateAttribute(Provider(""), UpdateType.RemoveAll)
         video.updateAttribute(Cast(mutableListOf()), UpdateType.Remove)

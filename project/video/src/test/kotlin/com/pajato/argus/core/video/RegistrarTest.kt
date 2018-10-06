@@ -72,7 +72,7 @@ class RegistrarTest {
         var data = mutableSetOf<Attribute>(Name("Video 1"))
         Assertions.assertEquals(1, interactor.findAll(data).size)
 
-        val id = (video as? CoreVideo)?.id ?: -1L
+        val id = (video as? CoreVideo)?.videoId ?: -1L
         Assertions.assertTrue(id >= now)
 
         data = mutableSetOf()
@@ -94,7 +94,7 @@ class RegistrarTest {
         Assertions.assertTrue(repo.exists() && repo.isFile && repo.length() > 0L)
         Assertions.assertTrue(video is CoreVideo)
 
-        val id = (video as? CoreVideo)?.id ?: -1L
+        val id = (video as? CoreVideo)?.videoId ?: -1L
         Assertions.assertTrue(interactor.findById(id) is CoreVideo)
         Assertions.assertEquals(video, interactor.findById(id))
         Assertions.assertTrue(interactor.findById(23) is VideoError)
@@ -137,7 +137,7 @@ class RegistrarTest {
         val name = "Video To Find By Id"
         val okVideo = interactor.register(name)
         if (okVideo is CoreVideo) {
-            val id = okVideo.id
+            val id = okVideo.videoId
             assertEquals(okVideo, interactor.findById(id))
         } else fail("Expected a CoreVideo but found a VideoError object!")
         val errorVideo = interactor.findById(-1)
@@ -166,16 +166,16 @@ class RegistrarTest {
                         releaseAttribute,
                         //seriesAttribute,
                         typeAttribute)
-                interactor.update(video.id, attributes, UpdateType.Add)
-                assertEquals(newName, (video.data[nameAttribute.attrType] as Name).name)
-                assertEquals(directorsList, (video.data[directorsAttribute.attrType] as Directors).directors)
-                interactor.update(video.id, mutableSetOf(Cast(mutableListOf("Star2"))), UpdateType.Remove)
-                assertTrue(video.data[AttributeType.Cast] != null)
-                interactor.update(video.id, mutableSetOf(Provider("HBO")), UpdateType.RemoveAll)
-                assertFalse(video.data.contains(AttributeType.Provider))
-                interactor.update(video.id, mutableSetOf(), UpdateType.CoverageDefault)
+                interactor.update(video.videoId, attributes, UpdateType.Add)
+                assertEquals(newName, (video.videoData[nameAttribute.attrType] as Name).name)
+                assertEquals(directorsList, (video.videoData[directorsAttribute.attrType] as Directors).directors)
+                interactor.update(video.videoId, mutableSetOf(Cast(mutableListOf("Star2"))), UpdateType.Remove)
+                assertTrue(video.videoData[AttributeType.Cast] != null)
+                interactor.update(video.videoId, mutableSetOf(Provider("HBO")), UpdateType.RemoveAll)
+                assertFalse(video.videoData.contains(AttributeType.Provider))
+                interactor.update(video.videoId, mutableSetOf(), UpdateType.CoverageDefault)
                 assertTrue(interactor.update(-23, mutableSetOf(), UpdateType.Add) is VideoError)
-                assertTrue(interactor.update(video.id, mutableSetOf(), UpdateType.CoverageDefault) is CoreVideo)
+                assertTrue(interactor.update(video.videoId, mutableSetOf(), UpdateType.CoverageDefault) is CoreVideo)
             }
             is VideoError -> fail("Expected CoreVideo object but found a VideoError with key ${video.key}")
         }

@@ -86,9 +86,9 @@ internal class PersisterTest {
         setup()
         val videoList = uut.load()
         Assertions.assertEquals(1, videoList.size)
-        Assertions.assertEquals(1, videoList[0].data.size)
-        Assertions.assertEquals(id, videoList[0].id)
-        Assertions.assertTrue((videoList[0].data[AttributeType.Name]!!.isEqual(Name(name))))
+        Assertions.assertEquals(1, videoList[0].videoData.size)
+        Assertions.assertEquals(id, videoList[0].videoId)
+        Assertions.assertTrue((videoList[0].videoData[AttributeType.Name]!!.isEqual(Name(name))))
     }
 
     @Test
@@ -104,8 +104,8 @@ internal class PersisterTest {
         setup()
         val videoList = uut.load()
         Assertions.assertEquals(1, videoList.size)
-        Assertions.assertEquals(2, videoList[0].data.size)
-        val attribute = videoList[0].data[AttributeType.Cast]
+        Assertions.assertEquals(2, videoList[0].videoData.size)
+        val attribute = videoList[0].videoData[AttributeType.Cast]
         if (attribute is Cast)
             Assertions.assertEquals(2, attribute.performers.size)
         else
@@ -128,8 +128,8 @@ internal class PersisterTest {
         setup()
         val videoList = uut.load()
         Assertions.assertEquals(1, videoList.size)
-        Assertions.assertEquals(2, videoList[0].data.size)
-        val attribute = videoList[0].data[AttributeType.Directors]
+        Assertions.assertEquals(2, videoList[0].videoData.size)
+        val attribute = videoList[0].videoData[AttributeType.Directors]
         if (attribute is Directors)
             Assertions.assertEquals(2, attribute.directors.size)
         else
@@ -151,7 +151,7 @@ internal class PersisterTest {
         setup()
         val videoList = uut.load()
         Assertions.assertEquals(1, videoList.size)
-        Assertions.assertEquals(1, videoList[0].data.size)
+        Assertions.assertEquals(1, videoList[0].videoData.size)
         repo.delete()
     }
 
