@@ -10,27 +10,27 @@ enum class ErrorKey {
 
 sealed class Video
 
-class CoreVideo(val id: Long, val data: MutableMap<AttributeType, Attribute> = mutableMapOf()) : Video() {
+class CoreVideo(val videoId: Long, val videoData: MutableMap<AttributeType, Attribute> = mutableMapOf()) : Video() {
     var archived = false
     fun updateAttribute(attribute: Attribute, type: UpdateType) {
         fun updateUsingAdd()  {
-            val videoAttribute = data[attribute.attrType]
+            val videoAttribute = videoData[attribute.attrType]
             if (videoAttribute == null || attribute.updateByReplace)
-                data[attribute.attrType] = attribute
+                videoData[attribute.attrType] = attribute
             else
                 videoAttribute.update(attribute, type)
         }
         fun updateUsingRemove() {
-            if (data.containsKey(attribute.attrType) && attribute.updateByReplace)
-                data.remove(attribute.attrType)
+            if (videoData.containsKey(attribute.attrType) && attribute.updateByReplace)
+                videoData.remove(attribute.attrType)
             else
-                data[attribute.attrType]?.update(attribute, type)
+                videoData[attribute.attrType]?.update(attribute, type)
         }
 
         when (type) {
             UpdateType.Add -> updateUsingAdd()
             UpdateType.Remove -> updateUsingRemove()
-            UpdateType.RemoveAll -> if (data.containsKey(attribute.attrType)) data.remove(attribute.attrType)
+            UpdateType.RemoveAll -> if (videoData.containsKey(attribute.attrType)) videoData.remove(attribute.attrType)
             else -> return
         }
     }
