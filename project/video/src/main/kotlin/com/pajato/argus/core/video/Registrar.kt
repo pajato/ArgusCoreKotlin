@@ -33,8 +33,8 @@ class Registrar(file: File) : VideoRegistrar {
         return if (filterData.size == 0) list else list.filter { matches(it) }
     }
 
-    override fun findById(id: Long): Video {
-        return videoMap[id] ?: VideoError(ErrorKey.NoSuchVideo)
+    override fun findById(videoId: Long): Video {
+        return videoMap[videoId] ?: VideoError(ErrorKey.NoSuchVideo)
     }
 
     override fun findByName(name: kotlin.String): Video {
@@ -78,17 +78,18 @@ class Registrar(file: File) : VideoRegistrar {
         return if (idMap[name] != null) VideoError(ErrorKey.AlreadyExists) else createVideo()
     }
 
-    override fun update(id: Long, data: MutableSet<Attribute>, type: UpdateType): Video {
+    override fun update(videoId: Long, videoData: MutableSet<Attribute>, updateType: UpdateType): Video {
         fun updateAttribute(video: CoreVideo, attribute: Attribute) {
-            video.updateAttribute(attribute, type)
-            videoStore.update(video, type)
+            video.updateAttribute(attribute, updateType)
+            for (value in attribute.values)
+                videoStore.update(updateType, videoId, attribute.attrType.name, value)
         }
 
-        val video = findById(id)
+        val video = findById(videoId)
         return when (video) {
             is VideoError -> video
             is CoreVideo -> {
-                for (attribute in data)
+                for (attribute in videoData)
                     updateAttribute(video, attribute)
                 video
             }

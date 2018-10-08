@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.*
 
-class DataTest {
+class VideoTest {
 
     @Test
     fun `Exercise the Cast Attribute property`() {
@@ -113,12 +113,12 @@ class DataTest {
         val id = 0L
         val attrType = AttributeType.Cast
         val name = "Keely Hawes"
-        val event = UpdateEvent(UpdateType.Add, id, AttributeType.Cast, name)
+        val event = UpdateEvent(UpdateType.Add, id.toString(), AttributeType.Cast.name, name)
         assertEquals(VideoEventType.Update, event.type)
         assertEquals(UpdateType.Add, event.subtype)
-        assertEquals(id, event.id)
-        assertEquals(attrType, event.attrType)
-        assertEquals(name, event.value)
+        assertEquals(id.toString(), event.videoId)
+        assertEquals(attrType.name, event.attributeName)
+        assertEquals(name, event.attributeValue)
     }
 
     @Test
@@ -126,12 +126,12 @@ class DataTest {
         val id = 0L
         val attrType = AttributeType.Cast
         val name = "Keely Hawes"
-        val event = UpdateEvent(UpdateType.Remove, id, AttributeType.Cast, name)
+        val event = UpdateEvent(UpdateType.Remove, id.toString(), AttributeType.Cast.name, name)
         assertEquals(VideoEventType.Update, event.type)
         assertEquals(UpdateType.Remove, event.subtype)
-        assertEquals(id, event.id)
-        assertEquals(attrType, event.attrType)
-        assertEquals(name, event.value)
+        assertEquals(id.toString(), event.videoId)
+        assertEquals(attrType.name, event.attributeName)
+        assertEquals(name, event.attributeValue)
     }
 
     @Test
@@ -139,12 +139,12 @@ class DataTest {
         val id = 0L
         val attrType = AttributeType.Cast
         val name = "Keely Hawes"
-        val event = UpdateEvent(UpdateType.RemoveAll, id, AttributeType.Cast, name)
+        val event = UpdateEvent(UpdateType.RemoveAll, id.toString(), AttributeType.Cast.name, name)
         assertEquals(VideoEventType.Update, event.type)
         assertEquals(UpdateType.RemoveAll, event.subtype)
-        assertEquals(id, event.id)
-        assertEquals(attrType, event.attrType)
-        assertEquals(name, event.value)
+        assertEquals(id.toString(), event.videoId)
+        assertEquals(attrType.name, event.attributeName)
+        assertEquals(name, event.attributeValue)
     }
 
     @Test

@@ -209,7 +209,7 @@ internal class PersisterTest {
         val videoList = uut.load()
         Assertions.assertEquals(1, videoList.size)
         videoList[0].updateAttribute(CoverageDefault(), UpdateType.CoverageDefault)
-        uut.update(videoList[0], UpdateType.CoverageDefault)
+        uut.coverageDefault()
     }
 
     @Test

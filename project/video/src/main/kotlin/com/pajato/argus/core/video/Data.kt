@@ -54,9 +54,9 @@ class ArchiveEvent(val id: Long): VideoEvent() { override val type = VideoEventT
 class RegisterEvent(val id: Long, val name: String): VideoEvent() { override val type = VideoEventType.Register }
 class UpdateEvent(
         val subtype: UpdateType,
-        val id: Long,
-        val attrType: AttributeType,
-        val value: String
+        val videoId: String,
+        val attributeName: String,
+        val attributeValue: String
 ): VideoEvent() {
     override val type = VideoEventType.Update
 }
