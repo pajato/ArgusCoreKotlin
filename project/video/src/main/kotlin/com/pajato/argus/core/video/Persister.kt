@@ -66,39 +66,22 @@ class Persister(private val eventStore: File) {
         persist(RegisterEvent(video.videoId, name))
     }
 
-    fun update(video: CoreVideo, type: UpdateType) {
-        fun persistAttribute(attr: Attribute) {
-            fun putString(value: String) {
-                persist(UpdateEvent(type, video.videoId, attr.attrType, value))
-            }
-            fun putArray(values: List<String>) {
-                for (value in values)
-                putString(value)
-            }
+    fun update(updateType: UpdateType, videoId: Long, attributeType: String, attributeValue: String) {
+        persist(UpdateEvent(updateType, videoId.toString(), attributeType, attributeValue))
+    }
 
-            when (attr) {
-                is Cast -> putArray(attr.performers)
-                is Directors -> putArray(attr.directors)
-                is Name -> putString(attr.name)
-                is Provider -> putString(attr.name)
-                is Release -> putString(attr.timeStamp.toString())
-                is Type -> putString(attr.type.name)
-                else -> persist(CoverageDefaultEvent())
-            }
-        }
-
-        for (attr in video.videoData.values)
-            persistAttribute(attr)
+    fun coverageDefault() {
+        persist(CoverageDefaultEvent())
     }
 
     private fun persist(event: VideoEvent) {
-        when (event) {
-            is ArchiveEvent -> eventStore.appendText("${event.type.name} ${event.id}")
-            is RegisterEvent -> eventStore.appendText("${event.type.name} ${event.id} ${event.name}")
-            is UpdateEvent -> eventStore.appendText(
-                    "${event.type.name} ${event.id} ${event.subtype.name} ${event.attrType.name} ${event.value}"
-            )
-            else -> return
+        val text = when (event) {
+            is ArchiveEvent -> "${event.type.name} ${event.id}"
+            is RegisterEvent -> "${event.type.name} ${event.id} ${event.name}"
+            is UpdateEvent -> "${event.type.name} ${event.videoId} ${event.subtype.name} ${event.attributeName} " +
+                        event.attributeValue
+            else -> "" // for code coverage
         }
+        if (!text.isEmpty()) eventStore.appendText(text)
     }
 }

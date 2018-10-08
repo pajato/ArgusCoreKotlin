@@ -3,9 +3,9 @@ package com.pajato.argus.core.video
 interface VideoRegistrar {
     fun findAll(filterData: MutableSet<Attribute> = mutableSetOf()): List<Video>
     fun findByName(name: kotlin.String): Video
-    fun findById(id: Long): Video
+    fun findById(videoId: Long): Video
     fun register(name: kotlin.String): Video
-    fun update(id: Long, data: MutableSet<Attribute>, type: UpdateType): Video
+    fun update(videoId: Long, videoData: MutableSet<Attribute>, updateType: UpdateType): Video
 }
 
 class VideoInteractor(private val registrar: VideoRegistrar) : VideoRegistrar {
@@ -14,8 +14,8 @@ class VideoInteractor(private val registrar: VideoRegistrar) : VideoRegistrar {
         return registrar.findAll(filterData)
     }
 
-    override fun findById(id: Long): Video {
-        return registrar.findById(id)
+    override fun findById(videoId: Long): Video {
+        return registrar.findById(videoId)
     }
 
     override fun findByName(name: kotlin.String): Video {
@@ -26,7 +26,7 @@ class VideoInteractor(private val registrar: VideoRegistrar) : VideoRegistrar {
         return registrar.register(name)
     }
 
-    override fun update(id: Long, data: MutableSet<Attribute>, type: UpdateType): Video {
-        return registrar.update(id, data, type)
+    override fun update(videoId: Long, videoData: MutableSet<Attribute>, updateType: UpdateType): Video {
+        return registrar.update(videoId, videoData, updateType)
     }
 }
