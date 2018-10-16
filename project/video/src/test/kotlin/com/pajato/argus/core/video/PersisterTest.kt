@@ -13,6 +13,14 @@ internal class PersisterTest {
     private val uut = Persister(repo)
 
     @Test
+    fun `add text to the event store, clear it and verify`() {
+        repo.appendText("testing line one line\ntesting line two\n")
+        Assertions.assertEquals(2, repo.readLines().size)
+        uut.clear()
+        Assertions.assertEquals(0, repo.readLines().size)
+    }
+
+    @Test
     fun `load a non-archived video`() {
         fun setup() {
             val events = "Register 0 MI5\nArchive 0 false\n"
@@ -22,9 +30,9 @@ internal class PersisterTest {
         }
 
         setup()
-        val videoList = uut.load()
-        Assertions.assertFalse(videoList[0].archived)
-        uut.archive(videoList[0])
+        val videoMap = uut.load()
+        Assertions.assertFalse(videoMap[0]!!.archived)
+        uut.archive(videoMap[0]!!)
     }
 
     @Test
@@ -37,9 +45,9 @@ internal class PersisterTest {
         }
 
         setup()
-        val videoList = uut.load()
-        Assertions.assertTrue(videoList[0].archived)
-        uut.archive(videoList[0])
+        val videoMap = uut.load()
+        Assertions.assertTrue(videoMap[0]!!.archived)
+        uut.archive(videoMap[0]!!)
     }
 
     @Test
@@ -52,9 +60,9 @@ internal class PersisterTest {
         }
 
         setup()
-        val videoList = uut.load()
-        Assertions.assertFalse(videoList[0].archived)
-        uut.archive(videoList[0])
+        val videoMap = uut.load()
+        Assertions.assertFalse(videoMap[0]!!.archived)
+        uut.archive(videoMap[0]!!)
     }
 
     @Test
@@ -67,9 +75,9 @@ internal class PersisterTest {
         }
 
         setup()
-        val videoList = uut.load()
-        Assertions.assertFalse(videoList[0].archived)
-        uut.archive(videoList[0])
+        val videoMap = uut.load()
+        Assertions.assertFalse(videoMap[0]!!.archived)
+        uut.archive(videoMap[0]!!)
     }
 
     @Test
@@ -84,11 +92,11 @@ internal class PersisterTest {
         }
 
         setup()
-        val videoList = uut.load()
-        Assertions.assertEquals(1, videoList.size)
-        Assertions.assertEquals(1, videoList[0].videoData.size)
-        Assertions.assertEquals(id, videoList[0].videoId)
-        Assertions.assertTrue((videoList[0].videoData[AttributeType.Name]!!.isEqual(Name(name))))
+        val videoMap = uut.load()
+        Assertions.assertEquals(1, videoMap.size)
+        Assertions.assertEquals(1, videoMap[0]!!.videoData.size)
+        Assertions.assertEquals(id, videoMap[0]!!.videoId)
+        Assertions.assertTrue((videoMap[0]!!.videoData[AttributeType.Name]!!.isEqual(Name(name))))
     }
 
     @Test
@@ -102,10 +110,10 @@ internal class PersisterTest {
         }
 
         setup()
-        val videoList = uut.load()
-        Assertions.assertEquals(1, videoList.size)
-        Assertions.assertEquals(2, videoList[0].videoData.size)
-        val attribute = videoList[0].videoData[AttributeType.Cast]
+        val videoMap = uut.load()
+        Assertions.assertEquals(1, videoMap.size)
+        Assertions.assertEquals(2, videoMap[0]!!.videoData.size)
+        val attribute = videoMap[0]!!.videoData[AttributeType.Cast]
         if (attribute is Cast)
             Assertions.assertEquals(2, attribute.performers.size)
         else
@@ -126,10 +134,10 @@ internal class PersisterTest {
         }
 
         setup()
-        val videoList = uut.load()
-        Assertions.assertEquals(1, videoList.size)
-        Assertions.assertEquals(2, videoList[0].videoData.size)
-        val attribute = videoList[0].videoData[AttributeType.Directors]
+        val videoMap = uut.load()
+        Assertions.assertEquals(1, videoMap.size)
+        Assertions.assertEquals(2, videoMap[0]!!.videoData.size)
+        val attribute = videoMap[0]!!.videoData[AttributeType.Directors]
         if (attribute is Directors)
             Assertions.assertEquals(2, attribute.directors.size)
         else
@@ -149,9 +157,9 @@ internal class PersisterTest {
         }
 
         setup()
-        val videoList = uut.load()
-        Assertions.assertEquals(1, videoList.size)
-        Assertions.assertEquals(1, videoList[0].videoData.size)
+        val videoMap = uut.load()
+        Assertions.assertEquals(1, videoMap.size)
+        Assertions.assertEquals(1, videoMap[0]!!.videoData.size)
         repo.delete()
     }
 
@@ -159,7 +167,7 @@ internal class PersisterTest {
     fun `when there are invalid events in the repo, load should ignore them quietly`() {
         fun setup() {
             println("Repo path is ${repo.absolutePath ?: "/nowhere!"}")
-            val events = "\nRegister\nRegister abcd\nRegister 0\nRegister 0 fred\n" +
+            val events = "\nRegister\nRegister abcd\nRegister 0\nRegister 0 fred\nInvalid 0 rest" +
                     "Update 0 Odd\nUpdate 0 Add \nUpdate 0 Add Name\nArchive 0\n"
             repo.appendText(events)
             Assertions.assertTrue(repo.exists() && repo.isFile && repo.length() > 0L)
@@ -168,8 +176,8 @@ internal class PersisterTest {
         }
 
         setup()
-        val videoList = uut.load()
-        Assertions.assertEquals(1, videoList.size)
+        val videoMap = uut.load()
+        Assertions.assertEquals(1, videoMap.size)
     }
 
     @Test
@@ -188,43 +196,23 @@ internal class PersisterTest {
         }
 
         setup()
-        val videoList = uut.load()
-        Assertions.assertEquals(1, videoList.size)
+        val videoMap = uut.load()
+        Assertions.assertEquals(1, videoMap.size)
     }
 
-    @Test
-    fun `update for code coverage`() {
-        fun setup() {
-            val events = "Register 0 A fully loaded video\n" +
-                    "Update 0 Add CoverageDefault dummy arg\n" +
-                    "Update 0 Add BrokenRegex\n" +
-                    "Update\n" +
-                    "Update 0 Add Type Unknown\n"
-            repo.appendText(events)
-            Assertions.assertTrue(repo.exists() && repo.isFile && repo.length() > 0L)
-            Assertions.assertEquals(events.length.toLong(), repo.length())
-        }
-
-        setup()
-        val videoList = uut.load()
-        Assertions.assertEquals(1, videoList.size)
-        videoList[0].updateAttribute(CoverageDefault(), UpdateType.CoverageDefault)
-        uut.coverageDefault()
-    }
 
     @Test
     fun `test that the default case for event type (CoverageDefault) does nothing`() {
         fun setup() {
-            val events = "Register 0 A fully loaded video\n" +
-                    "CoverageDefault 0 CoverageDefault Name to allow for 100% code coverage\n"
+            val events = "Register 0 A fully loaded video\n"
             repo.appendText(events)
             Assertions.assertTrue(repo.exists() && repo.isFile && repo.length() > 0L)
             Assertions.assertEquals(events.length.toLong(), repo.length())
         }
 
         setup()
-        val videoList = uut.load()
-        Assertions.assertEquals(1, videoList.size)
+        val videoMap = uut.load()
+        Assertions.assertEquals(1, videoMap.size)
     }
 
     @Test
@@ -238,7 +226,7 @@ internal class PersisterTest {
         }
 
         setup()
-        val videoList = uut.load()
-        Assertions.assertEquals(1, videoList.size)
+        val videoMap = uut.load()
+        Assertions.assertEquals(1, videoMap.size)
     }
 }

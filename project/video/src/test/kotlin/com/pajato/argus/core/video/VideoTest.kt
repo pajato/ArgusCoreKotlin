@@ -3,9 +3,19 @@ package com.pajato.argus.core.video
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.io.File
 import java.util.*
 
+fun getPersister(): Persister {
+    val dir: File? = File("build/tmp/Argus/").apply {
+        if (mkdirs()) println("Directory ${this.absolutePath} has been created.")
+    }
+    val repo = File.createTempFile("testVideoRepo", ".txt", dir)
+    return Persister(repo)
+}
+
 class VideoTest {
+    private val persister = getPersister()
 
     @Test
     fun `Exercise the Cast Attribute property`() {
@@ -71,8 +81,8 @@ class VideoTest {
         assert(!typeAttribute.isEqual(Type(VideoType.TvShow)))
 
         assert(typeAttribute.updateByReplace)
-        typeAttribute.update(typeAttribute, UpdateType.Add)
-        typeAttribute.isEqual(AttributeFactory.createAttribute(AttributeType.Name, "fred")!!)
+        typeAttribute.updateAdd(typeAttribute)
+        typeAttribute.isEqual(AttributeFactory.create(AttributeType.Name.name, "fred")!!)
 
     }
 
@@ -92,57 +102,105 @@ class VideoTest {
     }
 
     @Test
-    fun `Exercise the Archive Event class`() {
-        val event = ArchiveEvent(0)
-        assertEquals(VideoEventType.Archive, event.type)
-        assertEquals(0L, event.id)
+    fun `Exercise the default Archive Event class`() {
+        val event = ArchiveEvent()
+        assertEquals("Archive", event.key)
+        assertEquals("", event.videoId)
+        assertEquals("", event.state)
     }
 
     @Test
-    fun `Exercise the Register Event class`() {
-        val id = 0L
+    fun `Exercise the Archive Event with an invalid id`() {
+        val event = ArchiveEvent("abc")
+        assertEquals("Archive", event.key)
+        assertEquals("abc", event.videoId)
+        assertEquals("", event.state)
+        event.load(mutableMapOf())
+    }
+
+    @Test
+    fun `Exercise the default Register Event class`() {
         val name = "Some Name"
-        val event = RegisterEvent(id, name)
-        assertEquals(VideoEventType.Register, event.type)
-        assertEquals(id, event.id)
-        assertEquals(name, event.name)
+        val event = RegisterEvent("0", name)
+        assertEquals("Register", event.key)
+        assertEquals("0", event.videoId)
+        assertEquals(name, event.videoName)
     }
 
     @Test
-    fun `Exercise the Update (append) Event class`() {
-        val id = 0L
+    fun `Exercise the Register Event with an invalid id`() {
+        val name = "Some Name"
+        val videoId = "AlphaBetaGamma"
+        val event = RegisterEvent(videoId, name)
+        assertEquals("Register", event.key)
+        assertEquals(videoId, event.videoId)
+        assertEquals(name, event.videoName)
+        event.load(mutableMapOf())
+    }
+
+    @Test
+    fun `Exercise the default Update (append) Event class`() {
+        val id = "0"
         val attrType = AttributeType.Cast
         val name = "Keely Hawes"
-        val event = UpdateEvent(UpdateType.Add, id.toString(), AttributeType.Cast.name, name)
-        assertEquals(VideoEventType.Update, event.type)
-        assertEquals(UpdateType.Add, event.subtype)
-        assertEquals(id.toString(), event.videoId)
+        val event = UpdateEvent(id, AttributeType.Cast.name, name, UpdateType.Add.name)
+        assertEquals("Update", event.key)
+        assertEquals(UpdateType.Add.name, event.updateType)
+        assertEquals(id, event.videoId)
         assertEquals(attrType.name, event.attributeName)
         assertEquals(name, event.attributeValue)
     }
 
     @Test
-    fun `Exercise the Update (remove) Event class`() {
-        val id = 0L
+    fun `Exercise the Update (append) Event with an invalid id`() {
+        val id = "xyz"
         val attrType = AttributeType.Cast
         val name = "Keely Hawes"
-        val event = UpdateEvent(UpdateType.Remove, id.toString(), AttributeType.Cast.name, name)
-        assertEquals(VideoEventType.Update, event.type)
-        assertEquals(UpdateType.Remove, event.subtype)
-        assertEquals(id.toString(), event.videoId)
+        val event = UpdateEvent(id, AttributeType.Cast.name, name, UpdateType.Add.name)
+        assertEquals("Update", event.key)
+        assertEquals(UpdateType.Add.name, event.updateType)
+        assertEquals(id, event.videoId)
+        assertEquals(attrType.name, event.attributeName)
+        assertEquals(name, event.attributeValue)
+        event.load(mutableMapOf())
+    }
+
+    @Test
+    fun `Exercise the Update (append) Event with an invalid attribute`() {
+        val id = "0"
+        val name = "Keely Hawes"
+        val attributeName = "InvalidAttributeName"
+        val event = UpdateEvent(id, attributeName, name, UpdateType.Add.name)
+        event.load(mutableMapOf(0L to CoreVideo(0)))
+        assertEquals("Update", event.key)
+        assertEquals(UpdateType.Add.name, event.updateType)
+        assertEquals(id, event.videoId)
+        assertEquals(attributeName, event.attributeName)
+        assertEquals(name, event.attributeValue)
+    }
+
+    @Test
+    fun `Exercise the Update (remove) Event class`() {
+        val id = "0"
+        val attrType = AttributeType.Cast
+        val name = "Keely Hawes"
+        val event = UpdateEvent(id, AttributeType.Cast.name, name, UpdateType.Remove.name)
+        assertEquals("Update", event.key)
+        assertEquals(UpdateType.Remove.name, event.updateType)
+        assertEquals(id, event.videoId)
         assertEquals(attrType.name, event.attributeName)
         assertEquals(name, event.attributeValue)
     }
 
     @Test
     fun `Exercise the Update (removeAll) Event class`() {
-        val id = 0L
+        val id = "0"
         val attrType = AttributeType.Cast
         val name = "Keely Hawes"
-        val event = UpdateEvent(UpdateType.RemoveAll, id.toString(), AttributeType.Cast.name, name)
-        assertEquals(VideoEventType.Update, event.type)
-        assertEquals(UpdateType.RemoveAll, event.subtype)
-        assertEquals(id.toString(), event.videoId)
+        val event = UpdateEvent(id, AttributeType.Cast.name, name, UpdateType.RemoveAll.name)
+        assertEquals("Update", event.key)
+        assertEquals(UpdateType.RemoveAll.name, event.updateType)
+        assertEquals(id, event.videoId)
         assertEquals(attrType.name, event.attributeName)
         assertEquals(name, event.attributeValue)
     }
@@ -177,17 +235,11 @@ class VideoTest {
     }
 
     @Test
-    fun `do a remove and removeAll on a core video object`() {
+    fun `do an update remove and removeAll on a core video object`() {
         val video = CoreVideo(0)
         video.videoData[AttributeType.Provider] = Provider("HBO")
-        video.updateAttribute(Provider(""), UpdateType.Remove)
-        video.updateAttribute(Provider(""), UpdateType.RemoveAll)
-        video.updateAttribute(Cast(mutableListOf()), UpdateType.Remove)
-    }
-
-    @Test
-    fun `exercise the CoverageDefaultEvent for completeness`() {
-        val event = CoverageDefaultEvent()
-        assertEquals(VideoEventType.CoverageDefault, event.type)
+        video.updateWithStore(mutableSetOf(Provider("")), UpdateType.Remove.name, persister)
+        video.updateWithStore(mutableSetOf(Provider("")), UpdateType.RemoveAll.name, persister)
+        video.updateWithStore(mutableSetOf(Cast(mutableListOf())), UpdateType.Remove.name, persister)
     }
 }
