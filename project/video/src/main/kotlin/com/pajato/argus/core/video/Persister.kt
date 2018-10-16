@@ -2,86 +2,57 @@ package com.pajato.argus.core.video
 
 import java.io.File
 
-class Persister(private val eventStore: File) {
-    fun load(): List<CoreVideo> {
-        val list = mutableListOf<CoreVideo>()
-        val idMap = mutableMapOf<Long, CoreVideo>()
+class Persister(val eventStore: File) {
+    companion object {
         val baseRegex = """^([\w]+) (\d+) (.*$)""".toRegex()
-        val updateRegex = """^([\w]+) ([\w]+) (.*$)""".toRegex()
+    }
+
+    fun archive(video: CoreVideo) {
+        ArchiveEvent(video.videoId.toString()).store(this)
+    }
+
+    fun clear() {
+        eventStore.writeText("")
+    }
+
+    fun load(): MutableMap<Long, CoreVideo> {
+        val idMap = mutableMapOf<Long, CoreVideo>()
         fun parseAndExecuteEvent(line: String) {
-            fun executeEvent(command: VideoEventType, id: Long, rest: String) {
-                fun processArchiveEvent() {
-                    val state = rest.toBoolean()
-                    idMap[id]?.archived = state
-                }
-                fun processRegisterEvent() {
-                    val data = mutableMapOf<AttributeType, Attribute>()
-                    data[AttributeType.Name] = Name(rest)
-                    val video = CoreVideo(id, data)
-                    list.add(video)
-                    idMap[id] = video
-                }
-                fun processUpdateEvent() {
-                    fun executeUpdateEvent(updateType: UpdateType, attributeType: AttributeType, arg: String) {
-                        val video = idMap[id] ?: return
-                        val attribute = AttributeFactory.createAttribute(attributeType, arg) ?: return
-                        video.updateAttribute(attribute, updateType)
-                    }
-
-                    updateRegex.find(rest)?.apply {
-                        val updateType = UpdateType.valueOf(groupValues[1])
-                        val attributeType = AttributeType.valueOf(groupValues[2])
-                        val arg = groupValues[3]
-                        executeUpdateEvent(updateType, attributeType, arg)
-                    }
-                }
-
-                when (command) {
-                    VideoEventType.Archive -> processArchiveEvent()
-                    VideoEventType.Register -> processRegisterEvent()
-                    VideoEventType.Update -> processUpdateEvent()
-                    else -> return
-                }
-            }
+            fun toEvent(eventName: String, videoId: String, rest: String): VideoEvent? =
+                    videoEventMap[eventName]?.create(videoId, rest)
 
             baseRegex.find(line)?.apply {
-                val command = VideoEventType.valueOf(groupValues[1])
-                val id = groupValues[2].toLong()
+                val eventName = groupValues[1]
+                val videoId = groupValues[2]
                 val rest = groupValues[3]
-                executeEvent(command, id, rest)
+                val event = toEvent(eventName, videoId, rest) ?: return
+                event.load(idMap)
             }
         }
 
         eventStore.forEachLine { line ->
             parseAndExecuteEvent(line)
         }
-        return list
+        return idMap
     }
 
-    fun archive(video: CoreVideo) {
-        persist(ArchiveEvent(video.videoId))
+    fun persist(text: String) {
+        eventStore.appendText(text)
     }
 
     fun register(video: CoreVideo, name: String) {
-        persist(RegisterEvent(video.videoId, name))
+        RegisterEvent(video.videoId.toString(), name).store(this)
     }
 
-    fun update(updateType: UpdateType, videoId: Long, attributeType: String, attributeValue: String) {
-        persist(UpdateEvent(updateType, videoId.toString(), attributeType, attributeValue))
+    fun update(updateType: String, videoId: Long, attributeName: String, attributeValue: String) {
+        UpdateEvent(videoId.toString(), attributeName, attributeValue, updateType).store(this)
     }
 
-    fun coverageDefault() {
-        persist(CoverageDefaultEvent())
-    }
-
-    private fun persist(event: VideoEvent) {
-        val text = when (event) {
-            is ArchiveEvent -> "${event.type.name} ${event.id}"
-            is RegisterEvent -> "${event.type.name} ${event.id} ${event.name}"
-            is UpdateEvent -> "${event.type.name} ${event.videoId} ${event.subtype.name} ${event.attributeName} " +
-                        event.attributeValue
-            else -> "" // for code coverage
-        }
-        if (!text.isEmpty()) eventStore.appendText(text)
-    }
 }
+
+private val videoEventMap = mapOf(
+        ArchiveEvent.eventName to ArchiveEvent(),
+        RegisterEvent.eventName to RegisterEvent(),
+        UpdateEvent.eventName to UpdateEvent()
+)
+

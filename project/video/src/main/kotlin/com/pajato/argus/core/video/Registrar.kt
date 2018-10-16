@@ -5,22 +5,35 @@ import java.util.*
 
 class Registrar(file: File) : VideoRegistrar {
     val videoList : MutableList<Video> = mutableListOf()
-    private val videoStore = Persister(file)
+    private val persister = Persister(file)
     private val idMap: MutableMap<kotlin.String, Long> = mutableMapOf()
     private val videoMap: MutableMap<Long, CoreVideo> = mutableMapOf()
     private var lastTimestamp = 0L
 
     init {
-        videoStore.load()
+        persister.load()
     }
 
     fun reset() {
         videoList.clear()
         idMap.clear()
         videoMap.clear()
+        persister.clear()
     }
 
-    override fun findAll(filterData: MutableSet<Attribute>): List<Video> {
+    override fun archive(videoId: Long, state: Boolean): Video {
+        fun archive(video: CoreVideo) {
+            video.archived = state
+            persister.archive(video)
+        }
+
+        val video = findById(videoId)
+        if (video is CoreVideo)
+            archive(video)
+        return video
+    }
+
+    override fun findAll(filterData: MutableSet<Attribute>): List<CoreVideo> {
         fun matches(video: CoreVideo): Boolean {
             filterData.forEach {
                 val attribute = video.videoData[it.attrType] ?: return false
@@ -71,7 +84,7 @@ class Registrar(file: File) : VideoRegistrar {
 
             val video = CoreVideo(getUniqueTimestamp())
             processAttributes(video)
-            videoStore.register(video, name)
+            persister.register(video, name)
             return video
         }
 
@@ -79,20 +92,9 @@ class Registrar(file: File) : VideoRegistrar {
     }
 
     override fun update(videoId: Long, videoData: MutableSet<Attribute>, updateType: UpdateType): Video {
-        fun updateAttribute(video: CoreVideo, attribute: Attribute) {
-            video.updateAttribute(attribute, updateType)
-            for (value in attribute.values)
-                videoStore.update(updateType, videoId, attribute.attrType.name, value)
-        }
-
         val video = findById(videoId)
-        return when (video) {
-            is VideoError -> video
-            is CoreVideo -> {
-                for (attribute in videoData)
-                    updateAttribute(video, attribute)
-                video
-            }
-        }
+        if (video is CoreVideo)
+            video.updateWithStore(videoData, updateType.name, persister)
+        return video
     }
 }

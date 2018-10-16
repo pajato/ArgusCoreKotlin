@@ -25,11 +25,31 @@ class RegistrarTest {
     @BeforeEach
     fun init() {
         registrar.reset()
-        println("Examining persistence store (${repo.name})")
         repo.forEachLine {
-            println(it)
+            fail("The persistence store (${repo.name} is not empty after reset!")
         }
-        println("Examined persistence store.\n")
+    }
+
+    @Test fun `When a video is registered and archived, the repo should have one more line`() {
+        val video = interactor.register("Video One Register and Archive Test")
+        Assertions.assertEquals(1, repo.readLines().size)
+        val coreVideo = video as CoreVideo
+        interactor.archive(coreVideo.videoId, true)
+        Assertions.assertEquals(2, repo.readLines().size)
+        interactor.archive(23L, true)
+        Assertions.assertEquals(2, repo.readLines().size)
+    }
+
+    @Test fun `When a video is registered and the Cast updated, the repo should be consistent`() {
+        fun testAddingCastMember() {
+            val video = interactor.register("Video One Register and Archive Test")
+            Assertions.assertEquals(1, repo.readLines().size)
+            val coreVideo = video as CoreVideo
+            interactor.update(coreVideo.videoId, mutableSetOf(Cast(mutableListOf("Keeley Hawes"))), UpdateType.Add)
+            Assertions.assertEquals(2, repo.readLines().size)
+        }
+
+        testAddingCastMember()
     }
 
     @Test
@@ -146,38 +166,36 @@ class RegistrarTest {
 
     @Test
     fun `update a video in various ways to exercise the update() method`() {
-        val video = interactor.register("Faux Name")
-        when (video) {
-            is CoreVideo -> {
-                val newName = "The Reel Thing"
-                val castAttribute = Cast(mutableListOf("Star1", "Star2"))
-                val directorsList = mutableListOf("Alfred H.", "Steven S.")
-                val directorsAttribute = Directors(directorsList)
-                val nameAttribute = Name(newName)
-                val providerAttribute = Provider("HBO")
-                val releaseAttribute = Release(Date().time)
-                //val seriesAttribute = Series(mutableListOf())
-                val typeAttribute = Type(VideoType.Movie)
-                val attributes = mutableSetOf(
-                        castAttribute,
-                        directorsAttribute,
-                        nameAttribute,
-                        providerAttribute,
-                        releaseAttribute,
-                        //seriesAttribute,
-                        typeAttribute)
-                interactor.update(video.videoId, attributes, UpdateType.Add)
-                assertEquals(newName, (video.videoData[nameAttribute.attrType] as Name).name)
-                assertEquals(directorsList, (video.videoData[directorsAttribute.attrType] as Directors).directors)
-                interactor.update(video.videoId, mutableSetOf(Cast(mutableListOf("Star2"))), UpdateType.Remove)
-                assertTrue(video.videoData[AttributeType.Cast] != null)
-                interactor.update(video.videoId, mutableSetOf(Provider("HBO")), UpdateType.RemoveAll)
-                assertFalse(video.videoData.contains(AttributeType.Provider))
-                interactor.update(video.videoId, mutableSetOf(), UpdateType.CoverageDefault)
-                assertTrue(interactor.update(-23, mutableSetOf(), UpdateType.Add) is VideoError)
-                assertTrue(interactor.update(video.videoId, mutableSetOf(), UpdateType.CoverageDefault) is CoreVideo)
+        val videoList = listOf(interactor.register("Faux Name"), VideoError(ErrorKey.NoSuchVideo))
+        for (video in videoList)
+            when (video) {
+                is CoreVideo -> {
+                    val newName = "The Reel Thing"
+                    val castAttribute = Cast(mutableListOf("Star1", "Star2"))
+                    val directorsList = mutableListOf("Alfred H.", "Steven S.")
+                    val directorsAttribute = Directors(directorsList)
+                    val nameAttribute = Name(newName)
+                    val providerAttribute = Provider("HBO")
+                    val releaseAttribute = Release(Date().time)
+                    val seriesAttribute = Series(mutableListOf())
+                    val typeAttribute = Type(VideoType.Movie)
+                    val attributes = mutableSetOf(
+                            castAttribute,
+                            directorsAttribute,
+                            nameAttribute,
+                            providerAttribute,
+                            releaseAttribute,
+                            seriesAttribute,
+                            typeAttribute)
+                    interactor.update(video.videoId, attributes, UpdateType.Add)
+                    assertEquals(newName, (video.videoData[nameAttribute.attrType] as Name).name)
+                    assertEquals(directorsList, (video.videoData[directorsAttribute.attrType] as Directors).directors)
+                    interactor.update(video.videoId, mutableSetOf(Cast(mutableListOf("Star2"))), UpdateType.Remove)
+                    assertTrue(video.videoData[AttributeType.Cast] != null)
+                    interactor.update(video.videoId, mutableSetOf(Provider("HBO")), UpdateType.RemoveAll)
+                    assertFalse(video.videoData.contains(AttributeType.Provider))
+                }
+                is VideoError -> interactor.update(0L, mutableSetOf(), UpdateType.Add)
             }
-            is VideoError -> fail("Expected CoreVideo object but found a VideoError with key ${video.key}")
-        }
     }
 }

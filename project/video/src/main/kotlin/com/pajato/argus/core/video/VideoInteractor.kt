@@ -1,6 +1,7 @@
 package com.pajato.argus.core.video
 
 interface VideoRegistrar {
+    fun archive(videoId: Long, state: Boolean): Video
     fun findAll(filterData: MutableSet<Attribute> = mutableSetOf()): List<Video>
     fun findByName(name: kotlin.String): Video
     fun findById(videoId: Long): Video
@@ -9,6 +10,10 @@ interface VideoRegistrar {
 }
 
 class VideoInteractor(private val registrar: VideoRegistrar) : VideoRegistrar {
+
+    override fun archive(videoId: Long, state: Boolean): Video {
+        return registrar.archive(videoId, state)
+    }
 
     override fun findAll(filterData: MutableSet<Attribute>): List<Video> {
         return registrar.findAll(filterData)
